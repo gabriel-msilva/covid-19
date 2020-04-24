@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Gabriel Mello Silva" />
+
+<meta name="date" content="2020-04-23" />
+
+<title>Visualização de dados do COVID-19</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h2 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h3 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h4 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h5 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h6 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">COVID-19</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="covid-19_en.html">English</a>
+</li>
+<li>
+  <a href="covid-19_pt-br.html">Português</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Visualização de dados do COVID-19</h1>
+<h4 class="author">Gabriel Mello Silva</h4>
+<h4 class="date">2020-04-23</h4>
+
+</div>
+
+
+<style>
+p.caption {
+  font-style: italic;
+}
+</style>
+<p>A <a href="https://pt.wikipedia.org/wiki/COVID-19">doença coronavirus 2019 (COVID-19)</a> foi inicialmente identificada em Wuhan (China) em dezembro de 2019 e desde então tem se espalhado a uma taxa alarmante ao redor do mundo. Em março de 2020, a Organização Mundial da Saúde (OMS) declarou o surto do COVID-19 como uma <a href="https://pt.wikipedia.org/wiki/Pandemia">pandemia</a></p>
+<p>Neste projeto, são explorados os <a href="https://github.com/CSSEGISandData/COVID-19">dados do repositório</a> publicados pela Johns Hopkins University Center sobre casos confirmados e mortes do COVID-19. Os dados são atualizados diariamente desde janeiro de 2020.</p>
+<p>Se possível, <strong>#FiqueEmCasa</strong>.</p>
+<div id="casos-confirmados" class="section level2">
+<h2>Casos confirmados</h2>
+<p>Atualmente, existem mais de 2 620 000 casos confirmados e mais de 183 000 mortes no mundo todo. Mas além de números totais, deveríamos estar mais preocupados sobre o quão rápido a doença está se espalhando pelo mundo. A velocidade que o vírus contamina a população varia com o trânsito interno e de fronteira de cada país e contramedidas de isolamento governamentais, entre outros fatores.</p>
+<p>O gráfico abaixo mostra a evolução no tempo dos casos confirmados de COVID-19 em todos os países do globo. Muitos países têm tendências similares, mas alguns deles começam em momentos diferentes. A curva dos Estados Unidos se destaca pelo crescimento alarmante de casos. O salto na curva da China por volta de metade fevereiro não ée devido a um aumento repentino no número de casos, mas a uma <a href="https://g1.globo.com/ciencia-e-saude/noticia/2020/02/13/com-nova-metodologia-numero-de-casos-de-coronavirus-na-china-vai-a-598-mil-mortes-somam-13-mil.ghtml">mudança no procedimento de contagem</a>.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_pt-br_files/figure-html/world_cases-1.png" alt="Casos confirmados cumulativos do COVID-19 no tempo. Países com maior número de casos são destacados." width="672" />
+<p class="caption">
+Casos confirmados cumulativos do COVID-19 no tempo. Países com maior número de casos são destacados.
+</p>
+</div>
+<p>O gráfico abaixo compara o número de casos confirmados na China com o resto do mundo. Enquanto a China parece ter se estabilizado por volta da primeira metade de março (antes da pandemia ser declarada), a curva dos outros países (como um todo) está desacelerando somente a partir de abril.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_pt-br_files/figure-html/china-1.png" alt="Comparação de casos confirmados (escala logarítmica) entre China e o resto do mundo." width="672" />
+<p class="caption">
+Comparação de casos confirmados (escala logarítmica) entre China e o resto do mundo.
+</p>
+</div>
+</div>
+<div id="propagação-no-mundo" class="section level2">
+<h2>Propagação no mundo</h2>
+<p>Também é interessante visualizar a propagação do COVID-19 ao redor do mundo no espaço e tempo. Para isso, o mapa animado abixo é muito útil. Ele alude à rapidez com que a doença se tornou uma pandemia – isto é, como ela se transformou de um problema local para um problema <em>global</em> – mas troca a facilidade de leitura do número de casos pela representação visual dos países no mapa.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_pt-br_files/figure-html/world_map-1.gif" alt="Mapa animado do número de casos confirmados de COVID-19 no tempo. [Clique aqui](https://raw.githubusercontent.com/gabriel-msilva/covid-19/master/covid-19_global-map.gif) para ampliar."  />
+<p class="caption">
+Mapa animado do número de casos confirmados de COVID-19 no tempo. <a href="https://raw.githubusercontent.com/gabriel-msilva/covid-19/master/covid-19_global-map.gif">Clique aqui</a> para ampliar.
+</p>
+</div>
+</div>
+<div id="letalidade" class="section level2">
+<h2>Letalidade</h2>
+<p>Outra preocupação é quão mortal é a doença. Atualmente, a taxa de letalidade (número de mortes dividido pelo número de casos confirmados) é de 7.0% no mundo. Mas essa taxa varia de acordo com cada país, porque depende de características da população, condições do sistema de saúde e esforços governamentais.</p>
+<p>O gráfico abaixo mostra, em <a href="https://pt.wikipedia.org/wiki/Escala_logar%C3%ADtmica">escala log-log</a>, o número de mortes versus o número de casos confirmados divididos pela <a href="https://www.worldometers.info/world-population/population-by-country/">população do país</a>, facetados em seis áreas continentais. Ele também mostra linhas de igual porcentagem de letalidade para referência. Podemos ver que a maioria dos países possuem porcentagens de letalidade entre 2.5% e 10.0%. Países com as menores e maiores porcentagens, assim como alguns países bem conhecidos, são destacados em cada continente.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_pt-br_files/figure-html/lethality-1.png" alt="Mortes versus casos confirmados de COVID-19 dividido pela população do país (escala log-log) em 2020-04-22. Cada gráfico contém linhas de igual porcentagem de letalidade (mortes / casos confirmados)." width="672" />
+<p class="caption">
+Mortes versus casos confirmados de COVID-19 dividido pela população do país (escala log-log) em 2020-04-22. Cada gráfico contém linhas de igual porcentagem de letalidade (mortes / casos confirmados).
+</p>
+</div>
+</div>
+<div id="no-brasil" class="section level2">
+<h2>No Brasil</h2>
+<p>Em particular no Brasil, os casos de COVID-19 começaram a aparecer em meados de março. As medidas de isolamento social foram gradualmente adotadas em cada estado, porém há uma dissonância de políticas públicas entre governo estadual e federal. O atual presidente, Jair Bolsonaro, vem tentando <a href="https://www.youtube.com/watch?v=Vl_DYb-XaAE">minimizar o problema</a> e, ao propor o fim da quarentena em favor da recuperação econômica, adota posturas que vão exatamente contra as <a href="https://www.saude.gov.br/noticias/agencia-saude/46540-saude-anuncia-orientacoes-para-evitar-a-disseminacao-do-coronavirus">recomendações para conter a disseminação do vírus</a> de cientistas, agentes da saúde e da OMS. Esses conflitos culminaram na <a href="https://g1.globo.com/politica/noticia/2020/04/16/mandetta-anuncia-em-rede-social-que-foi-demitido-do-ministerio-da-saude.ghtml">demissão do ministro da Saúde</a>, Luiz Henrique Mandetta, em meio à crise de saúde enfrentada.</p>
+<p>Abaixo, pode-se observar o gráfico do número de casos confirmados ao longo do tempo de cada macro-região do país. Os dados são do Ministério da Saúde e outras estatísticas, como novos casos e letalidade, podem ser acompanhadas em tempo real no painel do link: <a href="https://covid.saude.gov.br/" class="uri">https://covid.saude.gov.br/</a>.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_pt-br_files/figure-html/br-1.png" alt="Casos confirmados ao longo do tempo de cada macro-região do Brasil." width="672" />
+<p class="caption">
+Casos confirmados ao longo do tempo de cada macro-região do Brasil.
+</p>
+</div>
+</div>
+<div id="notas-finais" class="section level2">
+<h2>Notas finais</h2>
+<p>Comunicação é uma das habilidades mais fundamentais para um cientista de dados. A capacidade de apresentar ideias e conclusões a partir dos dados e gerar valor para leitores e associados é sempre o objetivo final de qualquer trabalho. Para esse propósito, ferramentas gráficas são uma maneira consisa de explorar os dados e mostrar resultados ou padrões.</p>
+<p>Espero que estas visualizações de dados possam transmitir uma preocupação (positiva) para a propagação do COVID-19. É um problema global que precisa se lidado cooperativamente para contra atacar suas consequências. Todos podem contribuir para minimizar os riscos de infecção ficando em casa sempre que possível, usando máscara e lavando as mãos adequadamente. Essas pequenas ações podem salvar sua vida e de outros.</p>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

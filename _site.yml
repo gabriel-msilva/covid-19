@@ -1,0 +1,15 @@
+name: "Portfolio"
+output_dir: "."
+navbar:
+  title: "COVID-19"
+  left:
+  - text: "Home"
+    href: index.html
+  - text: "English"
+    href: covid-19_en.html
+  - text: "Português"
+    href: covid-19_pt-br.html
+output:
+  html_document:
+    fig_caption: yes
+    theme: readable

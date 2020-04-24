@@ -1,0 +1,36 @@
+---
+title: "Project: COVID-19"
+author: "Gabriel Mello Silva"
+---
+
+This project is available both in english and portuguese. Use the bar above to navigate through the versions.
+
+Este projeto está disponível em inglês e português. Utilize o menu acima para navegar entre as versões.
+
+---
+
+**Summary**
+
+A set of data visualizations exploring the [repository data](https://github.com/CSSEGISandData/COVID-19) of COVID-19 confirmed and death cases published by Johns Hopkins University Center. It includes plot animations and use of other external data to better communicate ideas.
+
+  * **Themes**: COVID-19, Data visualization, Storytelling
+
+  * **Programming languages**: R, Python, SQL
+
+\
+
+**Resumo**
+
+Um conjunto de visualizações gráficas explorando os [dados do repostiório](https://github.com/CSSEGISandData/COVID-19) de casos confirmados e mortes do COVID-19, publicadas pela Johns Hopkins University Center. Inclui gráficos animados e uso de dados externos para melhor comunicar ideias.
+
+  * **Temas**: COVID-19, Visualização de dados, Narrativa
+
+  * **Linguagens de programação**: R
+
+---
+
+Do you want to ask questions, discuss or share your opinion? Feel free to contact me.
+
+* E-mail: gabriel.zyx@gmail.com
+
+* Github: <https://github.com/gabriel-msilva/>

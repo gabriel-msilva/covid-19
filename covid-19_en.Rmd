@@ -1,0 +1,332 @@
+---
+title: "COVID-19 data visualizations"
+author: "Gabriel Mello Silva"
+date: "2020-04-23"
+---
+
+<style>
+p.caption {
+  font-style: italic;
+}
+</style>
+
+The [coronavirus disease 2019 (COVID-19)](https://en.wikipedia.org/wiki/Coronavirus_disease_2019) was first identified in Wuhan (China) in December 2019 and since then is spreading at an alarming rate across the world. On March 2020, the World Health Organization (WHO) declared the COVID-19 outbreak as a [pandemic](https://en.wikipedia.org/wiki/Pandemic).
+
+In this project, I explore the [repository data](https://github.com/CSSEGISandData/COVID-19) of COVID-19 confirmed and death cases published by Johns Hopkins University Center. The data is updated on a daily basis since January 2020.
+
+If possible, **\#StayHome**.
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+```{r packages}
+# Load packages
+
+library(tidyverse)
+library(lubridate)
+library(xml2)
+library(rvest)
+library(gganimate)
+```
+
+```{r data_import}
+# Data import
+
+confirmed_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+
+deaths_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+
+confirmed <- read_csv(confirmed_url)
+
+deaths <- read_csv(deaths_url)
+
+tidy_covid <- function(df) {
+  df %>% 
+    gather(-(`Province/State`:Long), key = "date", value = "n") %>% 
+    mutate(date = mdy(date)) %>% 
+    janitor::clean_names()
+}
+
+confirmed <- tidy_covid(confirmed)
+
+deaths <- tidy_covid(deaths)
+
+covid <- confirmed %>%
+  left_join(deaths, by = c("province_state", "country_region", "lat", "long", "date")) %>% 
+  rename(n_confirmed = n.x, n_deaths = n.y) %>% 
+  mutate(country_region = case_when(country_region == "Korea, South" ~ "South Korea",
+                                    country_region == "Taiwan*" ~ "Taiwan",
+                                    TRUE ~ country_region))
+
+world_pop <- read_html("https://www.worldometers.info/world-population/population-by-country/") %>% 
+  html_node(xpath = '//*[@id="example2"]') %>% 
+  html_table() %>% 
+  as_tibble() %>% 
+  select(country_region = `Country (or dependency)`, 
+         population = `Population (2020)`) %>% 
+  mutate(country_region = case_when(country_region == "Congo" ~ "Congo (Brazzaville)",
+                                    country_region == "DR Congo" ~ "Congo (Kinshasa)",
+                                    country_region == "Côte d'Ivoire" ~ "Cote d'Ivoire",
+                                    country_region == "Czech Republic (Czechia)" ~ "Czechia",
+                                    # country_region == "South Korea" ~ "Korea, South",
+                                    country_region == "St. Vincent & Grenadines" ~ "Saint Vincent and the Grenadines",
+                                    # country_region == "Taiwan" ~ "Taiwan*",
+                                    country_region == "United States" ~ "US",
+                                    country_region == "State of Palestine" ~ "West Bank and Gaza",
+                                    country_region == "Saint Kitts & Nevis" ~ "Saint Kitts and Nevis",
+                                    country_region == "Myanmar" ~ "Burma",
+                                    country_region == "Sao Tome & Principe" ~ "Sao Tome and Principe",
+                                    TRUE ~ country_region),
+         population = population %>% str_remove_all(",") %>% as.numeric())
+
+continents <- read_html("http://www.geonames.org/countries/") %>% 
+  html_node(xpath = '//*[@id="countries"]') %>% 
+  html_table() %>% 
+  as_tibble() %>% 
+  select(country = Country, continent = Continent) %>% 
+  mutate(continent = case_when(continent == "AF" ~ "Africa",
+                               continent == "AN" ~ "Antarctica",
+                               continent == "AS" ~ "Asia",
+                               continent == "EU" ~ "Europe",
+                               is.na(continent) ~ "Central and North America", 
+                               continent == "SA" ~ "South America",
+                               continent == "OC" ~ "Oceania",
+                               TRUE ~ NA_character_),
+         country = case_when(country == "Congo Republic" ~ "Congo (Brazzaville)",
+                             country == "DR Congo" ~ "Congo (Kinshasa)",
+                             country == "Ivory Coast" ~ "Cote d'Ivoire",
+                             country == "Vatican City" ~ "Holy See",
+                             country == "South Korea" ~ "Korea, South",
+                             country == "St Vincent and Grenadines" ~ "Saint Vincent and the Grenadines",
+                             country == "Taiwan" ~ "Taiwan*",
+                             country == "United States" ~ "US",
+                             country == "Palestine" ~ "West Bank and Gaza",
+                             country == "St Kitts and Nevis" ~ "Saint Kitts and Nevis",
+                             country == "Myanmar" ~ "Burma",
+                             # country == "" ~ "MS Zaandam",
+                             country == "São Tomé and Príncipe" ~ "Sao Tome and Principe",
+                             TRUE ~ country))
+
+country_info <- covid %>%
+  distinct(country_region) %>% 
+  left_join(world_pop, by = "country_region") %>% 
+  left_join(continents, by = c("country_region" = "country")) %>%
+  filter(!is.na(continent))
+
+rm(confirmed_url, deaths_url, confirmed, deaths, tidy_covid, continents, world_pop)
+```
+
+
+## Confirmed cases
+
+```{r}
+totals <- covid %>% 
+  filter(date == max(date)) %>% 
+  summarise(total_confirmed = n_confirmed %>% sum() %>% plyr::round_any(10^ceiling(log10(.)) / 1000), 
+            total_deaths = n_deaths %>% sum() %>% plyr::round_any(10^ceiling(log10(.)) / 1000))
+```
+
+Currently, there are more than `r scales::number(totals$total_confirmed)` confirmed cases and more than `r scales::number(totals$total_deaths)` deaths worldwide. But besides total numbers, we should be worried about how fast the disease is spreading around the world. The speed that the virus contaminates the population vary with each country's internal and border traffic and governamental isolation counter measures, among other factors.
+
+The plot below shows the evolution in time of COVID-19 confirmed cases in all countries around the globe. Many countries have quite similar trends, but some of them start at different points. The United States curve stands out with an alarming growth rate of cases. The jump in China's curve around mid February is not due to a sudden increase in the number of case but to a [change in counting procedure](https://www.forbes.com/sites/brucelee/2020/02/13/new-coronavirus-covid-19-counting-method-leads-to-jump-in-cases-deaths/#f1c795f16afb).
+
+```{r world_cases, fig.align="center", fig.cap="Cummulative confirmed cases of COVID-19 through time. Countries with most cases are highlighted."}
+top_confirmed <- covid %>% 
+  mutate(country_region = if_else(country_region == "United Kingdom", "UK", country_region)) %>% 
+  group_by(country_region, date) %>% 
+  summarise(n_confirmed = sum(n_confirmed), n_deaths = sum(n_deaths)) %>% 
+  filter(date == max(date)) %>% 
+  ungroup() %>% 
+  left_join(country_info, by = "country_region") %>% 
+  top_n(9, n_confirmed)
+
+events <- tribble(
+  ~date, ~description,
+  "2020-01-30", "PHEIC declared",
+  "2020-02-13", "Changes in China's counting procedure",
+  "2020-03-11", "Pandemic declared"
+  ) %>% 
+  mutate(date = ymd(date))
+
+covid %>% 
+  mutate(country_region = if_else(country_region == "United Kingdom", "UK", country_region)) %>% 
+  group_by(country_region, date) %>% 
+  summarise(n_confirmed = sum(n_confirmed), n_deaths = sum(n_deaths)) %>% 
+  ungroup() %>% 
+  left_join(country_info, by = "country_region") %>% 
+  ggplot() +
+  geom_line(data = . %>% filter(!country_region %in% top_confirmed$country_region), 
+            aes(x = date, y = n_confirmed, color = country_region, group = country_region), 
+            color = "grey") +
+  geom_line(data = . %>% filter(country_region %in% top_confirmed$country_region),
+            aes(x = date, y = n_confirmed, color = country_region), size = .8) +
+  ggrepel::geom_text_repel(data = top_confirmed, 
+                           aes(x = date, y = n_confirmed, color = country_region, label = country_region),
+                           xlim = c(max(covid$date), Inf), hjust = 0) +
+  geom_vline(data = events, 
+             aes(xintercept = date), 
+             linetype = "dashed") +
+  geom_text(data = events, 
+            aes(x = date, y = max(covid$n_confirmed) / 2, label = description), 
+            angle = 90, vjust = -.5) +
+  scale_color_discrete(guide = FALSE) +
+  scale_y_continuous(labels = scales::number) +
+  expand_limits(x = max(covid$date) + days(7)) +
+  labs(y = "Number of confirmed cases",
+       caption = "PHEIC = Public Health Emergency of International Concern") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())
+```
+
+The plot below compares how the number of confirmed cases of China compares with the rest of the world. While China seems to have stabilized around the first half of March (before the pandemic was declared), the curve of the other countries (as a whole) is starting to slow down just after April.
+
+```{r china, fig.align="center", fig.cap="Confirmed cases (log scale) comparasion between China and the rest of world."}
+covid %>% 
+  mutate(is_china = if_else(country_region == "China", "China", "Elsewhere")) %>% 
+  group_by(is_china, date) %>% 
+  summarise(n_confirmed = sum(n_confirmed), n_deaths = sum(n_deaths)) %>% 
+  ggplot(aes(date, n_confirmed, color = is_china)) +
+  geom_line(size = 1) +
+  scale_y_log10(labels = scales::number) +
+  labs(y = "Number of confirmed cases",
+       color = element_blank()) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())
+```
+
+
+## Worldwide spreading
+
+It is also interesting to visualize the spreading of COVID-19 around the world both in space and time. For this, the animated map below is quite useful. It alludes to how fast the disease turned into a pandemic -- that is, how it turned from a local to a global issue -- but trades the ease of reading the number of cases for the visual representation of countries in the map.
+
+```{r world_map, fig.align="center", fig.cap="Animated map of number of confirmed COVID-19 cases through time.  [Click here](https://raw.githubusercontent.com/gabriel-msilva/covid-19/master/covid-19_global-map.gif) to enlarge."}
+# World map animation
+
+world_map <- map_data("world")
+
+map_country_region <- read_csv("map_country_region.csv")
+
+covid_map <- covid %>% 
+  filter(country_region != "Diamond Princess") %>% 
+  mutate(country_region = case_when(country_region %in% c("Denmark", 
+                                                          "France", 
+                                                          "Netherlands", 
+                                                          "United Kingdom") & 
+                                  !is.na(province_state) ~ province_state,
+                                  country_region == "United Kingdom" ~ "UK",
+                                  TRUE ~ country_region)) %>% 
+  left_join(map_country_region, by = "country_region") %>% 
+  mutate(country_region = if_else(!is.na(map_region), map_region, country_region)) %>% 
+  select(-map_region) %>% 
+  group_by(country_region, date) %>% 
+  summarise(n_confirmed = sum(n_confirmed), n_deaths = sum(n_deaths)) %>% 
+  ungroup()
+
+no_cases_countries <- world_map %>% 
+  distinct(region) %>% 
+  anti_join(covid_map %>% 
+              distinct(country_region, date), 
+            by = c("region" = "country_region")) %>% 
+  as_tibble() %>% 
+  rename(country_region = region) %>% 
+  mutate(id = 1) %>% 
+  left_join(covid %>% 
+              distinct(date) %>% 
+              mutate(id = 1), 
+            by = "id") %>% 
+  mutate(n_confirmed = NA_real_, n_deaths = NA_real_) %>% 
+  select(-id)
+
+covid_map <- covid_map %>% 
+  bind_rows(no_cases_countries)
+
+anim_global <- covid_map %>% 
+  bind_rows(no_cases_countries) %>%
+  mutate(n_confirmed = na_if(n_confirmed, 0)) %>% 
+  ggplot(aes(map_id = country_region)) +
+  geom_map(aes(fill = n_confirmed / 1000), map = world_map, color = "white") +
+  # geom_point(aes(x = long, y = lat, size = n_confirmed)) +
+  expand_limits(x = world_map$long, 
+                y = world_map$lat, 
+                fill = c(0, max(covid_map$n_confirmed, na.rm = TRUE) / 1000)) +
+  scale_fill_viridis_c() +
+  theme_void() +
+  ggplot2::coord_equal() +
+  transition_manual(date) +
+  labs(title = "COVID-19 confirmed cases: {current_frame}",
+       subtitle = "Grey areas correspond to countries/regions with no cases or no data at the time",
+       fill = "No. of cases\n(in thousands)") +
+  theme(plot.title = element_text(size = 20, face = "bold"),
+        plot.subtitle = element_text(size = 14, face = "plain"))
+
+animate(anim_global,
+        renderer = gifski_renderer(),
+        width = 1200, height = 576,
+        duration = 25, start_pause = 5, end_pause = 10)
+```
+
+
+## Lethality
+
+Another concern is how deadly the disease is. Currently, the lethality rate (number of deaths divided by number of confirmed cases) is at `r covid %>% filter(date == max(date)) %>% summarise(l = sum(n_deaths) / sum(n_confirmed)) %>% pull(l) %>% scales::percent(accuracy = 0.1)` across the world. But this rate vary for each country, because it depends on the population caracteristics, healthcare system conditions and governamental efforts.
+
+The plot below shows, in log-log scale, the deaths versus confirmed cases per [country population](https://www.worldometers.info/world-population/population-by-country/) facetted into six continental areas. It also shows equal lethality percentages lines for reference. We can see that most countries' lethality percentages lie somewhat between 2.5% and 10.0%. Countries with the lowest and highest percentages, as well as some well know countries, are highlighted in each continent.
+
+```{r lethality, fig.align="center", fig.cap=str_glue("Deaths versus confirmed COVID-19 cases per country population ratios (log-log scale) as of {max(covid$date)}. Each plot contains equal lethality percentages (deaths / confirmed cases) lines.")}
+p <- c(.25, 1, 2.5, 10, 25)
+
+abline_labels <- crossing(tibble(continent = c("South America", "Central and North America")),
+                          tibble(p = p, p_label = paste0(p, "%")))
+
+df <- covid %>% 
+  group_by(country_region, date) %>% 
+  summarise(n_confirmed = sum(n_confirmed), n_deaths = sum(n_deaths)) %>% 
+  filter(date == max(date), n_deaths > 0) %>%
+  left_join(country_info, by = "country_region") %>% 
+  filter(!is.na(continent))
+
+extremes <- df %>% 
+  mutate(lethality = (n_deaths / n_confirmed)) %>% 
+  group_by(continent) %>% 
+  filter(lethality == max(lethality) | lethality == min(lethality)) %>% 
+  pull(country_region)
+
+df %>% 
+  mutate(country_label = if_else(country_region %in% c("South Africa",
+                                                       "China",
+                                                       "US",
+                                                       "Italy",
+                                                       "Australia",
+                                                       "Brazil",
+                                                       extremes),
+                                 country_region, "")) %>% 
+  ggplot(aes(x = n_confirmed / population, y = n_deaths / population)) +
+  geom_abline(slope = 1, intercept = log10(p / 100), linetype = "dashed") +
+  geom_point(aes(color = continent, size = population / 1e6), alpha = .6) +
+  ggrepel::geom_text_repel(aes(label = country_label), nudge_y = 1, nudge_x = -1) +
+  # annotation_custom(geom = "text", x = 1, y = p * 1 / 100, label = paste0(p, "%"), angle = 45) +
+  shadowtext::geom_shadowtext(data = abline_labels, 
+                              aes(x = 0.01, y = p * 0.01 / 100, label = p_label), 
+                              angle = 45, size = 3, bg.colour = "white", color = "black",) +
+  scale_x_log10(labels = scales::scientific) +
+  scale_y_log10(labels = scales::scientific) +
+  theme_minimal() +
+  theme(strip.background = element_rect(colour = "grey", fill = "grey"),
+        panel.border = element_rect(colour = "grey", fill = NA),
+        legend.position = "none") +
+  labs(x = "Confirmed cases / population ratio", 
+       y = "Deaths / population ratio",
+       color = "Continent", size = "Population",
+       title = ) +
+  facet_wrap(~continent)
+
+```
+
+
+## Final thoughts
+
+Communication is one of the most fundamental skills for a data scientist. The ability to present insights from data and generate value for readers or associates is always the final goal of any work. For this purpose, graphical tools are a way to concisely to explore data and show results or patterns.
+
+Hopefully, these data visualizations can convey a concern for the COVID-19 spreading. It is a global issue that needs to be cooperatively addressed to counter act its consequences. Everyone can contribute to minimize the risk of infection by staying home whenever possible, using masks and washing hands. These are small actions that can save your and others lives.

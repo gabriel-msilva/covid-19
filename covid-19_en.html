@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Gabriel Mello Silva" />
+
+<meta name="date" content="2020-04-23" />
+
+<title>COVID-19 data visualizations</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h2 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h3 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h4 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h5 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h6 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">COVID-19</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="covid-19_en.html">English</a>
+</li>
+<li>
+  <a href="covid-19_pt-br.html">Português</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">COVID-19 data visualizations</h1>
+<h4 class="author">Gabriel Mello Silva</h4>
+<h4 class="date">2020-04-23</h4>
+
+</div>
+
+
+<style>
+p.caption {
+  font-style: italic;
+}
+</style>
+<p>The <a href="https://en.wikipedia.org/wiki/Coronavirus_disease_2019">coronavirus disease 2019 (COVID-19)</a> was first identified in Wuhan (China) in December 2019 and since then is spreading at an alarming rate across the world. On March 2020, the World Health Organization (WHO) declared the COVID-19 outbreak as a <a href="https://en.wikipedia.org/wiki/Pandemic">pandemic</a>.</p>
+<p>In this project, I explore the <a href="https://github.com/CSSEGISandData/COVID-19">repository data</a> of COVID-19 confirmed and death cases published by Johns Hopkins University Center. The data is updated on a daily basis since January 2020.</p>
+<p>If possible, <strong>#StayHome</strong>.</p>
+<div id="confirmed-cases" class="section level2">
+<h2>Confirmed cases</h2>
+<p>Currently, there are more than 2 620 000 confirmed cases and more than 183 000 deaths worldwide. But besides total numbers, we should be worried about how fast the disease is spreading around the world. The speed that the virus contaminates the population vary with each country’s internal and border traffic and governamental isolation counter measures, among other factors.</p>
+<p>The plot below shows the evolution in time of COVID-19 confirmed cases in all countries around the globe. Many countries have quite similar trends, but some of them start at different points. The United States curve stands out with an alarming growth rate of cases. The jump in China’s curve around mid February is not due to a sudden increase in the number of case but to a <a href="https://www.forbes.com/sites/brucelee/2020/02/13/new-coronavirus-covid-19-counting-method-leads-to-jump-in-cases-deaths/#f1c795f16afb">change in counting procedure</a>.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_en_files/figure-html/world_cases-1.png" alt="Cummulative confirmed cases of COVID-19 through time. Countries with most cases are highlighted." width="672" />
+<p class="caption">
+Cummulative confirmed cases of COVID-19 through time. Countries with most cases are highlighted.
+</p>
+</div>
+<p>The plot below compares how the number of confirmed cases of China compares with the rest of the world. While China seems to have stabilized around the first half of March (before the pandemic was declared), the curve of the other countries (as a whole) is starting to slow down just after April.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_en_files/figure-html/china-1.png" alt="Confirmed cases (log scale) comparasion between China and the rest of world." width="672" />
+<p class="caption">
+Confirmed cases (log scale) comparasion between China and the rest of world.
+</p>
+</div>
+</div>
+<div id="worldwide-spreading" class="section level2">
+<h2>Worldwide spreading</h2>
+<p>It is also interesting to visualize the spreading of COVID-19 around the world both in space and time. For this, the animated map below is quite useful. It alludes to how fast the disease turned into a pandemic – that is, how it turned from a local to a global issue – but trades the ease of reading the number of cases for the visual representation of countries in the map.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_en_files/figure-html/world_map-1.gif" alt="Animated map of number of confirmed COVID-19 cases through time.  [Click here](https://raw.githubusercontent.com/gabriel-msilva/covid-19/master/covid-19_global-map.gif) to enlarge."  />
+<p class="caption">
+Animated map of number of confirmed COVID-19 cases through time. <a href="https://raw.githubusercontent.com/gabriel-msilva/covid-19/master/covid-19_global-map.gif">Click here</a> to enlarge.
+</p>
+</div>
+</div>
+<div id="lethality" class="section level2">
+<h2>Lethality</h2>
+<p>Another concern is how deadly the disease is. Currently, the lethality rate (number of deaths divided by number of confirmed cases) is at 7.0% across the world. But this rate vary for each country, because it depends on the population caracteristics, healthcare system conditions and governamental efforts.</p>
+<p>The plot below shows, in log-log scale, the deaths versus confirmed cases per <a href="https://www.worldometers.info/world-population/population-by-country/">country population</a> facetted into six continental areas. It also shows equal lethality percentages lines for reference. We can see that most countries’ lethality percentages lie somewhat between 2.5% and 10.0%. Countries with the lowest and highest percentages, as well as some well know countries, are highlighted in each continent.</p>
+<div class="figure" style="text-align: center">
+<img src="covid-19_en_files/figure-html/lethality-1.png" alt="Deaths versus confirmed COVID-19 cases per country population ratios (log-log scale) as of 2020-04-22. Each plot contains equal lethality percentages (deaths / confirmed cases) lines." width="672" />
+<p class="caption">
+Deaths versus confirmed COVID-19 cases per country population ratios (log-log scale) as of 2020-04-22. Each plot contains equal lethality percentages (deaths / confirmed cases) lines.
+</p>
+</div>
+</div>
+<div id="final-thoughts" class="section level2">
+<h2>Final thoughts</h2>
+<p>Communication is one of the most fundamental skills for a data scientist. The ability to present insights from data and generate value for readers or associates is always the final goal of any work. For this purpose, graphical tools are a way to concisely to explore data and show results or patterns.</p>
+<p>Hopefully, these data visualizations can convey a concern for the COVID-19 spreading. It is a global issue that needs to be cooperatively addressed to counter act its consequences. Everyone can contribute to minimize the risk of infection by staying home whenever possible, using masks and washing hands. These are small actions that can save your and others lives.</p>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
